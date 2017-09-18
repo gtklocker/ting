@@ -40,7 +40,7 @@ class Ting extends React.Component {
         $.getJSON('/api/messages/channel/' + this.state.channel, (messages) => {
             const history = _.keyBy(messages, 'id');
 
-            this.refs.history.onHistoricalMessagesAvailable(history);
+            this.refs.history.onHistoricalMessagesAvailable(this.state.channel, history);
         });
     };
 

@@ -1,3 +1,4 @@
+// @flow
 const React = require('react'),
       ReactDOM = require('react-dom'),
       emoticons = require('emoticons'),
@@ -6,7 +7,72 @@ const React = require('react'),
       $ = require('jquery'),
       update = require('immutability-helper');
 
-class History extends React.Component {
+type Username = string;
+
+type OnMessagePayload = {
+    messageid: number,
+    message_content: string,
+    message_type: string,
+    type: string,
+    target: string,
+    username: Username,
+};
+
+type UpdateTypingMessagesPayloadValue = {
+    message_content: string,
+    message_type: string,
+    target: string,
+    typing: boolean,
+    username: Username,
+    datetime_start?: Date,
+    datetime_end?: Date,
+};
+
+type UpdateTypingMessagesPayload = {
+    [id: string]: UpdateTypingMessagesPayloadValue,
+};
+
+type HistoricalMessagesPayloadValue = {
+    id: number,
+    message_content: string,
+    message_type: string,
+    typing: boolean,
+    username: Username,
+    datetime_start?: Date,
+    datetime_end?: Date,
+};
+
+type HistoricalMessagesPayload = {
+    [id: number]: HistoricalMessagesPayloadValue,
+};
+
+type StateMessagesValue = {
+    id: number,
+    message_content: string,
+    message_type: string,
+    target: string,
+    typing: boolean,
+    username: Username,
+    datetime_start?: Date,
+    datetime_end?: Date,
+};
+
+type StateMessages = {
+    [id: string]: StateMessagesValue,
+};
+
+type HistoryProps = {
+    channel: string,
+};
+
+type HistoryState = {
+    active: boolean,
+    unread: number,
+    myUsername: ?Username,
+    messages: StateMessages,
+};
+
+class History extends React.Component<HistoryProps, HistoryState> {
     state = {
         messages: {},
         unread: 0,
@@ -14,13 +80,17 @@ class History extends React.Component {
         myUsername: null
     };
 
-    _wrapper = null;
-    _title = document.title;
+    _wrapper: *;
+    _title: string = document.title;
+
+    // $FlowFixMe: browser API
     _audio = new Audio('static/sounds/message_sound.mp3');
 
     _scrollDown = () => {
         setTimeout(() => {
-            this._wrapper.scrollTop = this._wrapper.scrollHeight;
+            if (this._wrapper instanceof Element) {
+                this._wrapper.scrollTop = this._wrapper.scrollHeight;
+            }
         }, 30);
     };
 
@@ -37,7 +107,7 @@ class History extends React.Component {
         document.title = titlePrefix + this._title;
     };
 
-    deleteTypingMessage = (username) => {
+    deleteTypingMessage = (username: Username) => {
         this.setState((prevState) => {
             let messages = prevState.messages;
 
@@ -51,7 +121,7 @@ class History extends React.Component {
         });
     };
 
-    onUpdateTypingMessages = (messagesTyping) => {
+    onUpdateTypingMessages = (messagesTyping: UpdateTypingMessagesPayload) => {
         this.setState((prevState) => {
             let messages = prevState.messages;
 
@@ -86,15 +156,24 @@ class History extends React.Component {
         });
     };
 
-    onHistoricalMessagesAvailable = (messages) => {
+    onHistoricalMessagesAvailable = (
+        target: string,
+        historicalMessages: HistoricalMessagesPayload
+    ) => {
+        const messages = _.mapValues(historicalMessages, (msg) => {
+            return {
+                ...msg,
+                target
+            };
+        });
         this.setState({messages});
     };
 
-    onLogin = (myUsername) => {
+    onLogin = (myUsername: Username) => {
         this.setState({myUsername});
     };
 
-    onMessage = (data) => {
+    onMessage = (data: OnMessagePayload) => {
         if (data.target == this.props.channel) {
             this.setState((prevState, currentProps) => {
                 let messages = prevState.messages;

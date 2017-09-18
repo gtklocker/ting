@@ -1,0 +1,5 @@
+# build files
+dist/
+
+# flow cruft
+flow-typed/
